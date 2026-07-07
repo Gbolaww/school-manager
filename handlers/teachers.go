@@ -6,6 +6,8 @@ import (
 
 	"school-manager/database"
 	"school-manager/models"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func ShowTeachers(w http.ResponseWriter, r *http.Request) {
@@ -59,9 +61,15 @@ func HandleAddTeacher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := database.DB.Exec(
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to process password", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec(
 		"INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, 'teacher')",
-		fullName, email, password,
+		fullName, email, string(hashedPassword),
 	)
 	if err != nil {
 		http.Error(w, "Failed to add teacher. Email may already exist.", http.StatusInternalServerError)

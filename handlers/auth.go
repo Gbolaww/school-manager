@@ -10,6 +10,7 @@ import (
 	"school-manager/models"
 
 	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var store = sessions.NewCookieStore([]byte("school-secret-key"))
@@ -34,8 +35,15 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		email,
 	).Scan(&user.ID, &user.FullName, &user.Email, &user.PasswordHash, &user.Role)
 
-	if err != nil || user.PasswordHash != password {
-		log.Println("Login failed:", err)
+	if err != nil {
+		log.Println("User not found:", err)
+		http.Redirect(w, r, "/?error=invalid", http.StatusSeeOther)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		log.Println("Wrong password")
 		http.Redirect(w, r, "/?error=invalid", http.StatusSeeOther)
 		return
 	}
