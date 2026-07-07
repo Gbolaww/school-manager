@@ -1,0 +1,78 @@
+{{define "content"}}
+<div style="margin-bottom:20px;">
+    <div style="font-size:13px; color:#888;">Select a class to generate report cards</div>
+</div>
+
+<!-- Class selector -->
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:20px; margin-bottom:24px;">
+    <form method="GET" action="/reportcards">
+        <div style="display:flex; gap:12px; align-items:flex-end;">
+            <div style="flex:1;">
+                <label style="display:block; font-size:12px; color:#888; margin-bottom:6px;">Select class</label>
+                <select name="class_id" onchange="this.form.submit()"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:13.5px; outline:none; background:#fff;">
+                    <option value="">Choose a class</option>
+                    {{range .Classes}}
+                    <option value="{{.ID}}" {{if eq (printf "%d" .ID) $.SelectedClassID}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+{{if .Students}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+    <div style="padding:16px 20px; border-bottom:0.5px solid #EBF2FA;">
+        <span style="font-size:14px; font-weight:500; color:#1a1a1a;">{{.SelectedClass}}</span>
+        <span style="font-size:12px; color:#888; margin-left:8px;">{{len .Students}} students</span>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:0.5px solid #EBF2FA;">
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Student</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Admission no.</th>
+                <th style="text-align:right; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Report card</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Students}}
+            <tr style="border-bottom:0.5px solid #F2F7FC;">
+                <td style="padding:14px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#E3F0FB; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; color:#1A6FBF; flex-shrink:0;">
+                            {{slice .FullName 0 1}}
+                        </div>
+                        <span style="font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.FullName}}</span>
+                    </div>
+                </td>
+                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.AdmissionNumber}}</td>
+                <td style="padding:14px 20px; text-align:right;">
+                    <a href="/reportcards/generate?student_id={{.ID}}"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#E3F0FB; color:#1A6FBF; border-radius:8px; font-size:13px; font-weight:500; text-decoration:none;">
+                        <i class="ti ti-download" style="font-size:14px;"></i> Download PDF
+                    </a>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+
+{{else if .SelectedClassID}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
+    <div style="font-size:28px; margin-bottom:12px;">🎒</div>
+    <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">No students in this class</div>
+    <div style="font-size:13px; color:#888;">Add students to this class first</div>
+</div>
+
+{{else}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
+    <div style="font-size:28px; margin-bottom:12px;">📄</div>
+    <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">Select a class to continue</div>
+    <div style="font-size:13px; color:#888;">Choose a class from the dropdown above</div>
+</div>
+{{end}}
+
+{{end}}

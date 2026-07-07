@@ -1,0 +1,51 @@
+{{define "content"}}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="ti ti-users"></i></div>
+        <div class="stat-label">Total students</div>
+        <div class="stat-value">{{.TotalStudents}}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon sky"><i class="ti ti-building"></i></div>
+        <div class="stat-label">Classes</div>
+        <div class="stat-value">{{.TotalClasses}}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon grey"><i class="ti ti-user-check"></i></div>
+        <div class="stat-label">Teachers</div>
+        <div class="stat-value">{{.TotalTeachers}}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon teal"><i class="ti ti-file-text"></i></div>
+        <div class="stat-label">Report cards</div>
+        <div class="stat-value">{{.TotalReportCards}}</div>
+    </div>
+</div>
+
+<div class="bottom-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent activity</span>
+        </div>
+        <div class="activity-list">
+            <div class="activity-item">
+                <div class="activity-dot dot-blue"></div>
+                <span class="activity-text">Welcome to School Manager</span>
+                <span class="activity-time">Now</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Classes overview</span>
+            <a href="/classes" class="card-link">View all</a>
+        </div>
+        <div class="activity-list">
+            <div class="activity-item">
+                <span class="activity-text" style="color:#888;">No classes added yet</span>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

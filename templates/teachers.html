@@ -1,0 +1,83 @@
+{{define "content"}}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div style="font-size:13px; color:#888;">Manage teaching staff</div>
+    <button onclick="document.getElementById('add-modal').style.display='flex'"
+        style="background:#1A6FBF; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+        + Add teacher
+    </button>
+</div>
+
+{{if .Teachers}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:0.5px solid #EBF2FA;">
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Name</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Email</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Teachers}}
+            <tr style="border-bottom:0.5px solid #F2F7FC;">
+                <td style="padding:14px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:#E3F0FB; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; color:#1A6FBF; flex-shrink:0;">
+                            {{slice .FullName 0 1}}
+                        </div>
+                        <span style="font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.FullName}}</span>
+                    </div>
+                </td>
+                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.Email}}</td>
+                <td style="padding:14px 20px;">
+                    <span style="font-size:12px; background:#E0F5F0; color:#1A9E80; padding:3px 10px; border-radius:20px; font-weight:500;">Active</span>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{else}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:12px;">👩‍🏫</div>
+    <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">No teachers yet</div>
+    <div style="font-size:13px; color:#888;">Add your first teacher to get started</div>
+</div>
+{{end}}
+
+<!-- Add teacher modal -->
+<div id="add-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:420px;">
+        <div style="font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">Add a teacher</div>
+        <div style="font-size:13px; color:#888; margin-bottom:24px;">Teacher will use these details to log in</div>
+
+        <form action="/teachers/add" method="POST">
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Full name</label>
+                <input name="full_name" type="text" placeholder="e.g. Mrs. Adeyemi"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none;" required />
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Email address</label>
+                <input name="email" type="email" placeholder="e.g. adeyemi@school.com"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none;" required />
+            </div>
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Password</label>
+                <input name="password" type="password" placeholder="Set a login password"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none;" required />
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" onclick="document.getElementById('add-modal').style.display='none'"
+                    style="padding:10px 18px; border:0.5px solid #C5D8EE; border-radius:8px; background:#fff; font-size:13.5px; cursor:pointer; color:#444;">
+                    Cancel
+                </button>
+                <button type="submit"
+                    style="padding:10px 18px; background:#1A6FBF; color:#fff; border:none; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+                    Add teacher
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}
