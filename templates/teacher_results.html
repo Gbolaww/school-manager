@@ -1,0 +1,79 @@
+{{define "content"}}
+<div style="margin-bottom:20px;">
+    <a href="/teacher/dashboard" style="font-size:13px; color:#1A6FBF; text-decoration:none;">
+        <i class="ti ti-arrow-left" style="font-size:13px;"></i> Back to dashboard
+    </a>
+</div>
+
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+    <div style="padding:16px 20px; border-bottom:0.5px solid #EBF2FA; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <span style="font-size:14px; font-weight:500; color:#1a1a1a;">{{.SelectedClass}} — {{.SelectedSubject}}</span>
+            <span style="font-size:12px; color:#888; margin-left:8px;">First term · 2025/2026</span>
+        </div>
+    </div>
+
+    {{if .Results}}
+    <form action="/teacher/results/save" method="POST">
+        <input type="hidden" name="class_id" value="{{.SelectedClassID}}" />
+        <input type="hidden" name="subject_id" value="{{.SelectedSubjectID}}" />
+
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:0.5px solid #EBF2FA;">
+                    <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Student</th>
+                    <th style="text-align:center; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">CA (40)</th>
+                    <th style="text-align:center; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Exam (60)</th>
+                    <th style="text-align:center; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Total</th>
+                    <th style="text-align:center; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Results}}
+                <tr style="border-bottom:0.5px solid #F2F7FC;">
+                    <td style="padding:14px 20px; font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.StudentName}}</td>
+                    <td style="padding:10px 20px; text-align:center;">
+                        <input type="number" name="ca_{{.StudentID}}" value="{{.CAScore}}"
+                            min="0" max="40" step="0.5"
+                            style="width:70px; padding:8px; border:0.5px solid #C5D8EE; border-radius:6px; font-size:13.5px; text-align:center; outline:none;" />
+                    </td>
+                    <td style="padding:10px 20px; text-align:center;">
+                        <input type="number" name="exam_{{.StudentID}}" value="{{.ExamScore}}"
+                            min="0" max="60" step="0.5"
+                            style="width:70px; padding:8px; border:0.5px solid #C5D8EE; border-radius:6px; font-size:13.5px; text-align:center; outline:none;" />
+                    </td>
+                    <td style="padding:14px 20px; text-align:center; font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.Total}}</td>
+                    <td style="padding:14px 20px; text-align:center;">
+                        {{if .Grade}}
+                        <span style="font-size:12px; font-weight:500; padding:3px 10px; border-radius:20px;
+                            {{if eq .Grade "A"}}background:#E0F5F0; color:#1A9E80;
+                            {{else if eq .Grade "B"}}background:#E3F0FB; color:#1A6FBF;
+                            {{else if eq .Grade "C"}}background:#FFF8E0; color:#B8860B;
+                            {{else}}background:#FEE; color:#C0392B;
+                            {{end}}">
+                            {{.Grade}}
+                        </span>
+                        {{else}}
+                        <span style="font-size:12px; color:#ccc;">—</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <div style="padding:16px 20px; border-top:0.5px solid #EBF2FA; display:flex; justify-content:flex-end;">
+            <button type="submit"
+                style="padding:10px 24px; background:#1A6FBF; color:#fff; border:none; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+                Save results
+            </button>
+        </div>
+    </form>
+    {{else}}
+    <div style="padding:48px; text-align:center;">
+        <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">No students in this class</div>
+        <div style="font-size:13px; color:#888;">Ask the admin to enroll students</div>
+    </div>
+    {{end}}
+</div>
+{{end}}

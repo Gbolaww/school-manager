@@ -1,8 +1,6 @@
 {{define "content"}}
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <div>
-        <div style="font-size:13px; color:#888; margin-bottom:2px;">Manage your school classes</div>
-    </div>
+    <div style="font-size:13px; color:#888;">Manage your school classes</div>
     <button onclick="document.getElementById('add-modal').style.display='flex'"
         style="background:#1A6FBF; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
         + Add class
@@ -17,15 +15,22 @@
                 <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Class name</th>
                 <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Form teacher</th>
                 <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Students</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Action</th>
             </tr>
         </thead>
         <tbody>
             {{range .Classes}}
             <tr style="border-bottom:0.5px solid #F2F7FC;">
                 <td style="padding:14px 20px; font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.Name}}</td>
-                <td style="padding:14px 20px; font-size:13.5px; color:#888;">Not assigned</td>
+                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.FormTeacher}}</td>
                 <td style="padding:14px 20px;">
-                    <span style="font-size:12px; background:#E3F0FB; color:#1A6FBF; padding:3px 10px; border-radius:20px; font-weight:500;">0 students</span>
+                    <span style="font-size:12px; background:#E3F0FB; color:#1A6FBF; padding:3px 10px; border-radius:20px; font-weight:500;">{{.StudentCount}} students</span>
+                </td>
+                <td style="padding:10px 20px;">
+                    <button onclick="openAssignModal({{.ID}}, '{{.Name}}')"
+                        style="padding:6px 14px; border:0.5px solid #C5D8EE; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#1A6FBF;">
+                        Assign teacher
+                    </button>
                 </td>
             </tr>
             {{end}}
@@ -65,4 +70,44 @@
         </form>
     </div>
 </div>
+
+<!-- Assign form teacher modal -->
+<div id="assign-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:420px;">
+        <div style="font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">Assign form teacher</div>
+        <div id="assign-class-label" style="font-size:13px; color:#888; margin-bottom:24px;"></div>
+
+        <form action="/classes/assign-teacher" method="POST">
+            <input type="hidden" name="class_id" id="assign-class-id" />
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Select teacher</label>
+                <select name="teacher_id"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none; background:#fff;" required>
+                    <option value="">Choose a teacher</option>
+                    {{range .Teachers}}
+                    <option value="{{.ID}}">{{.FullName}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" onclick="document.getElementById('assign-modal').style.display='none'"
+                    style="padding:10px 18px; border:0.5px solid #C5D8EE; border-radius:8px; background:#fff; font-size:13.5px; cursor:pointer; color:#444;">
+                    Cancel
+                </button>
+                <button type="submit"
+                    style="padding:10px 18px; background:#1A6FBF; color:#fff; border:none; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+                    Assign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAssignModal(classID, className) {
+    document.getElementById('assign-class-id').value = classID;
+    document.getElementById('assign-class-label').textContent = 'Assigning form teacher to ' + className;
+    document.getElementById('assign-modal').style.display = 'flex';
+}
+</script>
 {{end}}

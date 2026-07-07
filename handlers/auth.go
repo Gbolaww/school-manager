@@ -54,7 +54,11 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	session.Values["user_role"] = user.Role
 	session.Save(r, w)
 
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	if user.Role == "teacher" {
+		http.Redirect(w, r, "/teacher/dashboard", http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	}
 }
 
 func getInitials(name string) string {

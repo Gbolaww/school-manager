@@ -1,0 +1,41 @@
+{{define "content"}}
+<div style="margin-bottom:24px;">
+    <div style="font-size:13px; color:#888;">Your assigned subjects this term</div>
+</div>
+
+{{if .Assignments}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:0.5px solid #EBF2FA;">
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Subject</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Class</th>
+                <th style="text-align:right; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Assignments}}
+            <tr style="border-bottom:0.5px solid #F2F7FC;">
+                <td style="padding:14px 20px; font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.SubjectName}}</td>
+                <td style="padding:14px 20px;">
+                    <span style="font-size:12px; background:#E3F0FB; color:#1A6FBF; padding:3px 10px; border-radius:20px; font-weight:500;">{{.ClassName}}</span>
+                </td>
+                <td style="padding:14px 20px; text-align:right;">
+                    <a href="/teacher/results?class_id={{.ClassID}}&subject_id={{.SubjectID}}"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#E3F0FB; color:#1A6FBF; border-radius:8px; font-size:13px; font-weight:500; text-decoration:none;">
+                        <i class="ti ti-edit" style="font-size:14px;"></i> Enter results
+                    </a>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{else}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:12px;">📚</div>
+    <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">No subjects assigned yet</div>
+    <div style="font-size:13px; color:#888;">Ask the admin to assign subjects to you</div>
+</div>
+{{end}}
+{{end}}
