@@ -41,11 +41,23 @@
             <span class="card-title">Classes overview</span>
             <a href="/classes" class="card-link">View all</a>
         </div>
-        <div class="activity-list">
-            <div class="activity-item">
-                <span class="activity-text" style="color:#888;">No classes added yet</span>
+        {{if .ClassOverview}}
+        <div class="class-list">
+            {{range .ClassOverview}}
+            <div class="class-row">
+                <div>
+                    <div class="class-name">{{.Name}}</div>
+                    <div class="class-meta">Form teacher: {{.FormTeacher}}</div>
+                </div>
+                <div class="class-count">{{.StudentCount}} students</div>
             </div>
+            {{end}}
         </div>
+        {{else}}
+        <div style="padding:32px; text-align:center;">
+            <div style="font-size:13px; color:#888;">No classes added yet</div>
+        </div>
+        {{end}}
     </div>
 </div>
 {{end}}

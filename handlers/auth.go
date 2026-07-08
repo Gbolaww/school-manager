@@ -91,10 +91,35 @@ func ShowDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var totalStudents, totalClasses, totalTeachers, totalReportCards int
-
 	database.DB.QueryRow("SELECT COUNT(*) FROM students").Scan(&totalStudents)
 	database.DB.QueryRow("SELECT COUNT(*) FROM classes").Scan(&totalClasses)
 	database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'teacher'").Scan(&totalTeachers)
+
+	type ClassOverview struct {
+		Name         string
+		FormTeacher  string
+		StudentCount int
+	}
+
+	classRows, err := database.DB.Query(`
+		SELECT c.name, COALESCE(u.full_name, 'Not assigned'), COUNT(s.id)
+		FROM classes c
+		LEFT JOIN users u ON c.form_teacher_id = u.id
+		LEFT JOIN students s ON s.class_id = c.id
+		GROUP BY c.id, c.name, u.full_name
+		ORDER BY c.name ASC
+		LIMIT 5
+	`)
+
+	var classOverview []ClassOverview
+	if err == nil {
+		defer classRows.Close()
+		for classRows.Next() {
+			var co ClassOverview
+			classRows.Scan(&co.Name, &co.FormTeacher, &co.StudentCount)
+			classOverview = append(classOverview, co)
+		}
+	}
 
 	tmpl := template.Must(template.ParseFiles("templates/layout.html", "templates/dashboard.html"))
 	tmpl.Execute(w, map[string]interface{}{
@@ -108,6 +133,7 @@ func ShowDashboard(w http.ResponseWriter, r *http.Request) {
 		"TotalClasses":     totalClasses,
 		"TotalTeachers":    totalTeachers,
 		"TotalReportCards": totalReportCards,
+		"ClassOverview":    classOverview,
 	})
 }
 
