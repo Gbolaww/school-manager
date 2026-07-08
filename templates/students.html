@@ -1,5 +1,5 @@
 {{define "content"}}
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
     <form method="GET" action="/students" style="flex:1; max-width:340px;">
         <div style="position:relative;">
             <i class="ti ti-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#888; font-size:15px;"></i>
@@ -7,10 +7,22 @@
                 style="width:100%; padding:10px 14px 10px 36px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:13.5px; outline:none; background:#fff;" />
         </div>
     </form>
-    <button onclick="document.getElementById('add-modal').style.display='flex'"
-        style="background:#1A6FBF; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer; margin-left:12px;">
-        + Add student
-    </button>
+
+    <div style="display:flex; align-items:center; gap:12px;">
+        {{if .ClassGroups}}
+        <select id="jump-to-class" onchange="jumpToClass(this.value)"
+            style="padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:13.5px; background:#fff; outline:none;">
+            <option value="">Jump to class...</option>
+            {{range .ClassGroups}}
+            <option value="class-{{.ClassID}}">{{.ClassName}}</option>
+            {{end}}
+        </select>
+        {{end}}
+        <button onclick="document.getElementById('add-modal').style.display='flex'"
+            style="background:#1A6FBF; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+            + Add student
+        </button>
+    </div>
 </div>
 
 {{if .Search}}
@@ -19,51 +31,56 @@
 </div>
 {{end}}
 
-{{if .Students}}
-<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr style="border-bottom:0.5px solid #EBF2FA;">
-                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Name</th>
-                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Admission no.</th>
-                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Class</th>
-                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Parent phone</th>
-                <th style="text-align:right; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{range .Students}}
-            <tr style="border-bottom:0.5px solid #F2F7FC;">
-                <td style="padding:14px 20px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:#E3F0FB; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; color:#1A6FBF; flex-shrink:0;">
-                            {{slice .FullName 0 1}}
+{{if .ClassGroups}}
+{{range .ClassGroups}}
+<div id="class-{{.ClassID}}" style="margin-bottom:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#F0F6FF; border-radius:8px; margin-bottom:8px;">
+        <span style="font-size:14px; font-weight:500; color:#1a1a1a;">{{.ClassName}}</span>
+        <span style="font-size:12.5px; color:#888;">{{len .Students}} student{{if ne (len .Students) 1}}s{{end}}</span>
+    </div>
+
+    <div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:0.5px solid #EBF2FA;">
+                    <th style="text-align:left; padding:12px 20px; font-size:12px; color:#888; font-weight:500;">Name</th>
+                    <th style="text-align:left; padding:12px 20px; font-size:12px; color:#888; font-weight:500;">Admission no.</th>
+                    <th style="text-align:left; padding:12px 20px; font-size:12px; color:#888; font-weight:500;">Parent phone</th>
+                    <th style="text-align:right; padding:12px 20px; font-size:12px; color:#888; font-weight:500;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Students}}
+                <tr style="border-bottom:0.5px solid #F2F7FC;">
+                    <td style="padding:12px 20px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:32px; height:32px; border-radius:50%; background:#E3F0FB; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; color:#1A6FBF; flex-shrink:0;">
+                                {{slice .FullName 0 1}}
+                            </div>
+                            <span style="font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.FullName}}</span>
                         </div>
-                        <span style="font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.FullName}}</span>
-                    </div>
-                </td>
-                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.AdmissionNumber}}</td>
-                <td style="padding:14px 20px;">
-                    <span style="font-size:12px; background:#E3F0FB; color:#1A6FBF; padding:3px 10px; border-radius:20px; font-weight:500;">{{.ClassName}}</span>
-                </td>
-                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.ParentPhone}}</td>
-                <td style="padding:14px 20px; text-align:right;">
-                    <div style="display:flex; gap:8px; justify-content:flex-end;">
-                        <button onclick="openEditModal({{.ID}}, '{{.FullName}}', '{{.AdmissionNumber}}', '{{.ParentPhone}}')"
-                            style="padding:6px 14px; border:0.5px solid #C5D8EE; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#1A6FBF;">
-                            Edit
-                        </button>
-                        <button onclick="openDeleteModal({{.ID}}, '{{.FullName}}')"
-                            style="padding:6px 14px; border:0.5px solid #FFCCCC; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#C0392B;">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            {{end}}
-        </tbody>
-    </table>
+                    </td>
+                    <td style="padding:12px 20px; font-size:13.5px; color:#888;">{{.AdmissionNumber}}</td>
+                    <td style="padding:12px 20px; font-size:13.5px; color:#888;">{{.ParentPhone}}</td>
+                    <td style="padding:12px 20px; text-align:right;">
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                            <button onclick="openEditModal({{.ID}}, '{{.FullName}}', '{{.AdmissionNumber}}', '{{.ParentPhone}}')"
+                                style="padding:6px 14px; border:0.5px solid #C5D8EE; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#1A6FBF;">
+                                Edit
+                            </button>
+                            <button onclick="openDeleteModal({{.ID}}, '{{.FullName}}')"
+                                style="padding:6px 14px; border:0.5px solid #FFCCCC; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#C0392B;">
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
 </div>
+{{end}}
 {{else}}
 <div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
     <div style="font-size:32px; margin-bottom:12px;">🎒</div>
@@ -191,6 +208,12 @@
 </div>
 
 <script>
+function jumpToClass(anchorId) {
+    if (!anchorId) return;
+    var el = document.getElementById(anchorId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function openEditModal(id, fullName, admissionNumber, parentPhone) {
     document.getElementById('edit-full-name').value = fullName;
     document.getElementById('edit-admission').value = admissionNumber;

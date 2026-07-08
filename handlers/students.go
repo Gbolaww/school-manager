@@ -11,6 +11,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type ClassGroup struct {
+	ClassID   int
+	ClassName string
+	Students  []models.Student
+}
+
 func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session")
 	if session.Values["user_name"] == nil {
@@ -26,20 +32,20 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	if search != "" {
 		rows, err = database.DB.Query(`
 			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
-			       COALESCE(c.name, 'Unassigned')
+			       COALESCE(c.id, 0), COALESCE(c.name, 'Unassigned')
 			FROM students s
 			LEFT JOIN classes c ON s.class_id = c.id
 			WHERE LOWER(s.full_name) LIKE LOWER($1)
 			   OR LOWER(s.admission_number) LIKE LOWER($1)
-			ORDER BY s.full_name ASC
+			ORDER BY c.name ASC, s.full_name ASC
 		`, "%"+search+"%")
 	} else {
 		rows, err = database.DB.Query(`
 			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
-			       COALESCE(c.name, 'Unassigned')
+			       COALESCE(c.id, 0), COALESCE(c.name, 'Unassigned')
 			FROM students s
 			LEFT JOIN classes c ON s.class_id = c.id
-			ORDER BY s.full_name ASC
+			ORDER BY c.name ASC, s.full_name ASC
 		`)
 	}
 
@@ -49,11 +55,23 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var students []models.Student
+	// classID -> index in classGroups, so students land in the right group
+	// as we scan through in class-name order.
+	groupIndex := map[int]int{}
+	var classGroups []ClassGroup
+
 	for rows.Next() {
 		var s models.Student
-		rows.Scan(&s.ID, &s.FullName, &s.AdmissionNumber, &s.ParentPhone, &s.ClassName)
-		students = append(students, s)
+		var classID int
+		rows.Scan(&s.ID, &s.FullName, &s.AdmissionNumber, &s.ParentPhone, &classID, &s.ClassName)
+
+		idx, exists := groupIndex[classID]
+		if !exists {
+			classGroups = append(classGroups, ClassGroup{ClassID: classID, ClassName: s.ClassName})
+			idx = len(classGroups) - 1
+			groupIndex[classID] = idx
+		}
+		classGroups[idx].Students = append(classGroups[idx].Students, s)
 	}
 
 	classRows, err := database.DB.Query("SELECT id, name FROM classes ORDER BY name ASC")
@@ -78,7 +96,7 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 		"UserInitials": getInitials(session.Values["user_name"].(string)),
 		"Role":         session.Values["user_role"],
 		"Term":         getCurrentTerm(),
-		"Students":     students,
+		"ClassGroups":  classGroups,
 		"Classes":      classes,
 		"Search":       search,
 	})
