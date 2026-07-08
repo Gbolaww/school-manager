@@ -72,6 +72,15 @@ func getInitials(name string) string {
 	return strings.ToUpper(string(parts[0][0])) + strings.ToUpper(string(parts[len(parts)-1][0]))
 }
 
+func getCurrentTerm() string {
+	var name, year string
+	err := database.DB.QueryRow("SELECT name, year FROM terms WHERE is_current = TRUE LIMIT 1").Scan(&name, &year)
+	if err != nil {
+		return "No active term"
+	}
+	return name + " term · " + year
+}
+
 func ShowDashboard(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session")
 	userName := session.Values["user_name"]
@@ -94,7 +103,7 @@ func ShowDashboard(w http.ResponseWriter, r *http.Request) {
 		"UserName":         userName,
 		"UserInitials":     getInitials(userName.(string)),
 		"Role":             session.Values["user_role"],
-		"Term":             "First term · 2025/2026",
+		"Term":             getCurrentTerm(),
 		"TotalStudents":    totalStudents,
 		"TotalClasses":     totalClasses,
 		"TotalTeachers":    totalTeachers,

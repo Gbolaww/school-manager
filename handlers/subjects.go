@@ -85,7 +85,7 @@ func ShowSubjects(w http.ResponseWriter, r *http.Request) {
 		"UserName":     session.Values["user_name"],
 		"UserInitials": getInitials(session.Values["user_name"].(string)),
 		"Role":         session.Values["user_role"],
-		"Term":         "First term · 2025/2026",
+		"Term":         getCurrentTerm(),
 		"Subjects":     subjects,
 		"Assignments":  assignments,
 		"Classes":      classes,

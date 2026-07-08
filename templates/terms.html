@@ -1,0 +1,94 @@
+{{define "content"}}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div style="font-size:13px; color:#888;">Manage academic terms</div>
+    <button onclick="document.getElementById('add-modal').style.display='flex'"
+        style="background:#1A6FBF; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+        + Add term
+    </button>
+</div>
+
+{{if .Terms}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:0.5px solid #EBF2FA;">
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Term</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Year</th>
+                <th style="text-align:left; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Status</th>
+                <th style="text-align:right; padding:14px 20px; font-size:12px; color:#888; font-weight:500;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Terms}}
+            <tr style="border-bottom:0.5px solid #F2F7FC;">
+                <td style="padding:14px 20px; font-size:13.5px; font-weight:500; color:#1a1a1a;">{{.Name}} term</td>
+                <td style="padding:14px 20px; font-size:13.5px; color:#888;">{{.Year}}</td>
+                <td style="padding:14px 20px;">
+                    {{if .IsCurrent}}
+                    <span style="font-size:12px; background:#E0F5F0; color:#1A9E80; padding:3px 10px; border-radius:20px; font-weight:500;">Current</span>
+                    {{else}}
+                    <span style="font-size:12px; background:#F0F2F5; color:#5F6B7A; padding:3px 10px; border-radius:20px; font-weight:500;">Inactive</span>
+                    {{end}}
+                </td>
+                <td style="padding:14px 20px; text-align:right;">
+                    {{if not .IsCurrent}}
+                    <form action="/terms/set-current" method="POST" style="display:inline;">
+                        <input type="hidden" name="term_id" value="{{.ID}}" />
+                        <button type="submit"
+                            style="padding:6px 14px; border:0.5px solid #C5D8EE; border-radius:6px; background:#fff; font-size:12.5px; cursor:pointer; color:#1A6FBF;">
+                            Set as current
+                        </button>
+                    </form>
+                    {{else}}
+                    <span style="font-size:12.5px; color:#ccc;">Active</span>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{else}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:48px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:12px;">📅</div>
+    <div style="font-size:15px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">No terms yet</div>
+    <div style="font-size:13px; color:#888;">Add your first academic term to get started</div>
+</div>
+{{end}}
+
+<!-- Add term modal -->
+<div id="add-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:420px;">
+        <div style="font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">Add a term</div>
+        <div style="font-size:13px; color:#888; margin-bottom:24px;">Create a new academic term</div>
+
+        <form action="/terms/add" method="POST">
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Term name</label>
+                <select name="name"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none; background:#fff;" required>
+                    <option value="">Select term</option>
+                    <option value="First">First</option>
+                    <option value="Second">Second</option>
+                    <option value="Third">Third</option>
+                </select>
+            </div>
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:6px;">Academic year</label>
+                <input name="year" type="text" placeholder="e.g. 2025/2026"
+                    style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:14px; outline:none;" required />
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" onclick="document.getElementById('add-modal').style.display='none'"
+                    style="padding:10px 18px; border:0.5px solid #C5D8EE; border-radius:8px; background:#fff; font-size:13.5px; cursor:pointer; color:#444;">
+                    Cancel
+                </button>
+                <button type="submit"
+                    style="padding:10px 18px; background:#1A6FBF; color:#fff; border:none; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+                    Add term
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

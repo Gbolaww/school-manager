@@ -45,6 +45,9 @@ func main() {
 	r.HandleFunc("/teacher/dashboard", handlers.ShowTeacherDashboard).Methods("GET")
 	r.HandleFunc("/teacher/results", handlers.ShowTeacherResults).Methods("GET")
 	r.HandleFunc("/teacher/results/save", handlers.HandleSaveTeacherResults).Methods("POST")
+	r.HandleFunc("/terms", handlers.ShowTerms).Methods("GET")
+	r.HandleFunc("/terms/add", handlers.HandleAddTerm).Methods("POST")
+	r.HandleFunc("/terms/set-current", handlers.HandleSetCurrentTerm).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {

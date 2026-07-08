@@ -46,7 +46,7 @@ func ShowTeacherDashboard(w http.ResponseWriter, r *http.Request) {
 		"Page":         "dashboard",
 		"UserName":     session.Values["user_name"],
 		"UserInitials": getInitials(session.Values["user_name"].(string)),
-		"Term":         "First term · 2025/2026",
+		"Term":         getCurrentTerm(),
 		"Assignments":  assignments,
 	})
 }
@@ -100,7 +100,7 @@ func ShowTeacherResults(w http.ResponseWriter, r *http.Request) {
 		"Page":              "results",
 		"UserName":          session.Values["user_name"],
 		"UserInitials":      getInitials(session.Values["user_name"].(string)),
-		"Term":              "First term · 2025/2026",
+		"Term":              getCurrentTerm(),
 		"Results":           results,
 		"SelectedClassID":   classID,
 		"SelectedSubjectID": subjectID,

@@ -16,8 +16,8 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := database.DB.Query(`
-		SELECT s.id, s.full_name, s.admission_number, s.parent_phone, 
-		       COALESCE(c.name, 'Unassigned') 
+		SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
+		       COALESCE(c.name, 'Unassigned')
 		FROM students s
 		LEFT JOIN classes c ON s.class_id = c.id
 		ORDER BY s.full_name ASC
@@ -56,7 +56,7 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 		"UserName":     session.Values["user_name"],
 		"UserInitials": getInitials(session.Values["user_name"].(string)),
 		"Role":         session.Values["user_role"],
-		"Term":         "First term · 2025/2026",
+		"Term":         getCurrentTerm(),
 		"Students":     students,
 		"Classes":      classes,
 	})

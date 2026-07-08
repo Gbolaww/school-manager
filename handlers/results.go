@@ -70,7 +70,6 @@ func ShowResults(w http.ResponseWriter, r *http.Request) {
 				subjects = append(subjects, s)
 			}
 		}
-
 		database.DB.QueryRow("SELECT name FROM classes WHERE id = $1", selectedClassID).Scan(&selectedClass)
 	}
 
@@ -87,8 +86,8 @@ func ShowResults(w http.ResponseWriter, r *http.Request) {
 				COALESCE(r.total, 0),
 				COALESCE(r.grade, '')
 			FROM students s
-			LEFT JOIN results r ON r.student_id = s.id 
-				AND r.subject_id = $1 
+			LEFT JOIN results r ON r.student_id = s.id
+				AND r.subject_id = $1
 				AND r.term_id = $2
 			WHERE s.class_id = $3
 			ORDER BY s.full_name ASC
@@ -113,7 +112,7 @@ func ShowResults(w http.ResponseWriter, r *http.Request) {
 		"UserName":          session.Values["user_name"],
 		"UserInitials":      getInitials(session.Values["user_name"].(string)),
 		"Role":              session.Values["user_role"],
-		"Term":              "First term · 2025/2026",
+		"Term":              getCurrentTerm(),
 		"Classes":           classes,
 		"Subjects":          subjects,
 		"Results":           results,
@@ -145,43 +144,31 @@ func HandleSaveResults(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var studentID int
-		var scoreType string
-
 		_, err := fmt.Sscanf(key, "ca_%d", &studentID)
-		if err == nil {
-			scoreType = "ca"
-		} else {
-			_, err = fmt.Sscanf(key, "exam_%d", &studentID)
-			if err == nil {
-				scoreType = "exam"
-			} else {
-				continue
-			}
-		}
-
-		score, err := strconv.ParseFloat(values[0], 64)
-		if err != nil || score < 0 {
+		if err != nil {
 			continue
 		}
 
-		if scoreType == "ca" {
-			caScore := score
-			examScore := 0.0
-			r.ParseForm()
-			examKey := fmt.Sprintf("exam_%d", studentID)
-			if examVals, ok := r.Form[examKey]; ok && len(examVals) > 0 {
-				examScore, _ = strconv.ParseFloat(examVals[0], 64)
-			}
-			total := caScore + examScore
-			grade := gradeFromTotal(total)
-
-			_, err = database.DB.Exec(`
-				INSERT INTO results (student_id, subject_id, class_id, term_id, ca_score, exam_score, total, grade)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-				ON CONFLICT (student_id, subject_id, term_id)
-				DO UPDATE SET ca_score = $5, exam_score = $6, total = $7, grade = $8
-			`, studentID, subjectID, classID, termID, caScore, examScore, total, grade)
+		caScore, err := strconv.ParseFloat(values[0], 64)
+		if err != nil || caScore < 0 {
+			continue
 		}
+
+		examScore := 0.0
+		examKey := fmt.Sprintf("exam_%d", studentID)
+		if examVals, ok := r.Form[examKey]; ok && len(examVals) > 0 {
+			examScore, _ = strconv.ParseFloat(examVals[0], 64)
+		}
+
+		total := caScore + examScore
+		grade := gradeFromTotal(total)
+
+		database.DB.Exec(`
+			INSERT INTO results (student_id, subject_id, class_id, term_id, ca_score, exam_score, total, grade)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			ON CONFLICT (student_id, subject_id, term_id)
+			DO UPDATE SET ca_score = $5, exam_score = $6, total = $7, grade = $8
+		`, studentID, subjectID, classID, termID, caScore, examScore, total, grade)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/results?class_id=%s&subject_id=%s", classID, subjectID), http.StatusSeeOther)

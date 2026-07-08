@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"text/template"
 
 	"school-manager/database"
@@ -60,12 +61,27 @@ func ShowReportCards(w http.ResponseWriter, r *http.Request) {
 		"UserName":        session.Values["user_name"],
 		"UserInitials":    getInitials(session.Values["user_name"].(string)),
 		"Role":            session.Values["user_role"],
-		"Term":            "First term · 2025/2026",
+		"Term":            getCurrentTerm(),
 		"Classes":         classes,
 		"Students":        students,
 		"SelectedClassID": selectedClassID,
 		"SelectedClass":   selectedClass,
 	})
+}
+
+func ordinalSuffix(n int) string {
+	switch {
+	case n%100 >= 11 && n%100 <= 13:
+		return fmt.Sprintf("%dth", n)
+	case n%10 == 1:
+		return fmt.Sprintf("%dst", n)
+	case n%10 == 2:
+		return fmt.Sprintf("%dnd", n)
+	case n%10 == 3:
+		return fmt.Sprintf("%drd", n)
+	default:
+		return fmt.Sprintf("%dth", n)
+	}
 }
 
 func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
@@ -83,12 +99,13 @@ func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
 
 	var student models.Student
 	var className string
+	var classID int
 	database.DB.QueryRow(`
-		SELECT s.id, s.full_name, s.admission_number, COALESCE(c.name, '')
+		SELECT s.id, s.full_name, s.admission_number, COALESCE(c.name, ''), COALESCE(c.id, 0)
 		FROM students s
 		LEFT JOIN classes c ON s.class_id = c.id
 		WHERE s.id = $1
-	`, studentID).Scan(&student.ID, &student.FullName, &student.AdmissionNumber, &className)
+	`, studentID).Scan(&student.ID, &student.FullName, &student.AdmissionNumber, &className, &classID)
 
 	var termID int
 	var termName, termYear string
@@ -131,17 +148,55 @@ func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
 
 	overallGrade := gradeFromTotal(average)
 
+	type StudentAverage struct {
+		StudentID int
+		Average   float64
+	}
+
+	classStudentRows, err := database.DB.Query(`
+		SELECT s.id, COALESCE(AVG(r.total), 0)
+		FROM students s
+		LEFT JOIN results r ON r.student_id = s.id AND r.term_id = $1
+		WHERE s.class_id = $2
+		GROUP BY s.id
+	`, termID, classID)
+
+	var classAverages []StudentAverage
+	if err == nil {
+		defer classStudentRows.Close()
+		for classStudentRows.Next() {
+			var sa StudentAverage
+			classStudentRows.Scan(&sa.StudentID, &sa.Average)
+			classAverages = append(classAverages, sa)
+		}
+	}
+
+	sort.Slice(classAverages, func(i, j int) bool {
+		return classAverages[i].Average > classAverages[j].Average
+	})
+
+	position := 1
+	totalStudents := len(classAverages)
+	for i, sa := range classAverages {
+		if sa.StudentID == student.ID {
+			position = i + 1
+			break
+		}
+	}
+
+	_ = position
+	_ = totalStudents
+	_ = ordinalSuffix
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
 	pdf.SetFillColor(26, 111, 191)
 	pdf.Rect(0, 0, 210, 35, "F")
-
 	pdf.SetTextColor(255, 255, 255)
 	pdf.SetFont("Arial", "B", 18)
 	pdf.SetXY(10, 8)
 	pdf.Cell(190, 10, "School Manager")
-
 	pdf.SetFont("Arial", "", 11)
 	pdf.SetXY(10, 20)
 	pdf.Cell(190, 8, "Student Report Card")
@@ -159,6 +214,7 @@ func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
 
 	pdf.SetXY(10, 62)
 	pdf.SetFillColor(240, 246, 255)
+	pdf.SetTextColor(0, 0, 0)
 	pdf.SetFont("Arial", "B", 10)
 	pdf.CellFormat(80, 8, "Subject", "1", 0, "L", true, 0, "")
 	pdf.CellFormat(25, 8, "CA (40)", "1", 0, "C", true, 0, "")
@@ -167,8 +223,6 @@ func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
 	pdf.CellFormat(25, 8, "Grade", "1", 1, "C", true, 0, "")
 
 	pdf.SetFont("Arial", "", 10)
-	pdf.SetFillColor(255, 255, 255)
-
 	for i, res := range results {
 		if i%2 == 0 {
 			pdf.SetFillColor(248, 252, 255)
@@ -200,7 +254,6 @@ func GenerateReportCard(w http.ResponseWriter, r *http.Request) {
 	pdf.Line(10, pdf.GetY(), 80, pdf.GetY())
 	pdf.SetXY(10, pdf.GetY()+2)
 	pdf.Cell(70, 6, "Class Teacher's Signature")
-
 	pdf.SetXY(130, pdf.GetY()-2)
 	pdf.Line(130, pdf.GetY(), 200, pdf.GetY())
 	pdf.SetXY(130, pdf.GetY()+2)
