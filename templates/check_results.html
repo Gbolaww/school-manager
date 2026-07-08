@@ -14,7 +14,7 @@
             <i class="ti ti-file-text"></i>
         </div>
         <div class="login-title">Check Results</div>
-        <div class="login-subtitle">Enter the student's admission number to view their results</div>
+        <div class="login-subtitle">Enter the student's admission number and parent's phone number on file</div>
 
         {{if .Error}}
         <div class="error-msg">{{.Error}}</div>
@@ -25,6 +25,20 @@
                 <label class="form-label">Admission number</label>
                 <input class="form-input" type="text" name="admission_number" value="{{.AdmissionNumber}}" placeholder="e.g. GFS/2024/001" required />
             </div>
+            <div class="form-group">
+                <label class="form-label">Parent's phone number</label>
+                <input class="form-input" type="text" name="parent_phone" placeholder="e.g. 08012345678" required />
+            </div>
+            {{if .Terms}}
+            <div class="form-group">
+                <label class="form-label">Term</label>
+                <select class="form-input" name="term_id">
+                    {{range .Terms}}
+                    <option value="{{.ID}}" {{if eq .ID $.SelectedTermID}}selected{{end}}>{{.Name}} term, {{.Year}}{{if .IsCurrent}} (current){{end}}</option>
+                    {{end}}
+                </select>
+            </div>
+            {{end}}
             <button class="login-btn" type="submit">Check results</button>
         </form>
 
@@ -71,7 +85,7 @@
                 </table>
             </div>
             <div style="margin-top:14px; text-align:center;">
-                <a href="/reportcards/generate?student_id={{.StudentID}}"
+                <a href="/check-results/download?admission_number={{.AdmissionNumber}}&parent_phone={{.ParentPhone}}&term_id={{.SelectedTermID}}"
                     style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#1A6FBF; text-decoration:none; font-weight:500;">
                     <i class="ti ti-download"></i> Download PDF report card
                 </a>

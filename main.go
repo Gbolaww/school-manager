@@ -58,6 +58,7 @@ func main() {
 	r.HandleFunc("/subjects/delete/{id}", handlers.HandleDeleteSubject).Methods("POST")
 	r.HandleFunc("/check-results", handlers.ShowCheckResults).Methods("GET")
 	r.HandleFunc("/check-results", handlers.HandleCheckResults).Methods("POST")
+	r.HandleFunc("/check-results/download", handlers.PublicDownloadReportCard).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {
