@@ -6,6 +6,8 @@ import (
 
 	"school-manager/database"
 	"school-manager/models"
+
+	"github.com/gorilla/mux"
 )
 
 func ShowSubjects(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +111,60 @@ func HandleAddSubject(w http.ResponseWriter, r *http.Request) {
 	_, err := database.DB.Exec("INSERT INTO subjects (name) VALUES ($1)", name)
 	if err != nil {
 		http.Error(w, "Failed to add subject. It may already exist.", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/subjects", http.StatusSeeOther)
+}
+
+func HandleEditSubject(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	name := r.FormValue("name")
+
+	if name == "" {
+		http.Redirect(w, r, "/subjects", http.StatusSeeOther)
+		return
+	}
+
+	_, err := database.DB.Exec("UPDATE subjects SET name = $1 WHERE id = $2", name, id)
+	if err != nil {
+		http.Error(w, "Failed to update subject", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/subjects", http.StatusSeeOther)
+}
+
+func HandleDeleteSubject(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	_, err := database.DB.Exec("DELETE FROM results WHERE subject_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete subject results", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM class_subjects WHERE subject_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete subject assignments", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM subjects WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete subject", http.StatusInternalServerError)
 		return
 	}
 

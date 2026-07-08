@@ -6,6 +6,8 @@ import (
 
 	"school-manager/database"
 	"school-manager/models"
+
+	"github.com/gorilla/mux"
 )
 
 func ShowClasses(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +87,66 @@ func HandleAddClass(w http.ResponseWriter, r *http.Request) {
 	_, err := database.DB.Exec("INSERT INTO classes (name) VALUES ($1)", name)
 	if err != nil {
 		http.Error(w, "Failed to add class", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/classes", http.StatusSeeOther)
+}
+
+func HandleEditClass(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	name := r.FormValue("name")
+
+	if name == "" {
+		http.Redirect(w, r, "/classes", http.StatusSeeOther)
+		return
+	}
+
+	_, err := database.DB.Exec("UPDATE classes SET name = $1 WHERE id = $2", name, id)
+	if err != nil {
+		http.Error(w, "Failed to update class", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/classes", http.StatusSeeOther)
+}
+
+func HandleDeleteClass(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	_, err := database.DB.Exec("DELETE FROM results WHERE class_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete class results", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM class_subjects WHERE class_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete class subjects", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("UPDATE students SET class_id = NULL WHERE class_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to unassign students", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM classes WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete class", http.StatusInternalServerError)
 		return
 	}
 

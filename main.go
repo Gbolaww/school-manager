@@ -48,6 +48,14 @@ func main() {
 	r.HandleFunc("/terms", handlers.ShowTerms).Methods("GET")
 	r.HandleFunc("/terms/add", handlers.HandleAddTerm).Methods("POST")
 	r.HandleFunc("/terms/set-current", handlers.HandleSetCurrentTerm).Methods("POST")
+	r.HandleFunc("/students/edit/{id}", handlers.HandleEditStudent).Methods("POST")
+	r.HandleFunc("/students/delete/{id}", handlers.HandleDeleteStudent).Methods("POST")
+	r.HandleFunc("/classes/edit/{id}", handlers.HandleEditClass).Methods("POST")
+	r.HandleFunc("/classes/delete/{id}", handlers.HandleDeleteClass).Methods("POST")
+	r.HandleFunc("/teachers/edit/{id}", handlers.HandleEditTeacher).Methods("POST")
+	r.HandleFunc("/teachers/delete/{id}", handlers.HandleDeleteTeacher).Methods("POST")
+	r.HandleFunc("/subjects/edit/{id}", handlers.HandleEditSubject).Methods("POST")
+	r.HandleFunc("/subjects/delete/{id}", handlers.HandleDeleteSubject).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {

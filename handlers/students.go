@@ -6,6 +6,8 @@ import (
 
 	"school-manager/database"
 	"school-manager/models"
+
+	"github.com/gorilla/mux"
 )
 
 func ShowStudents(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +87,55 @@ func HandleAddStudent(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		http.Error(w, "Failed to add student. Admission number may already exist.", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/students", http.StatusSeeOther)
+}
+
+func HandleEditStudent(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	fullName := r.FormValue("full_name")
+	admissionNumber := r.FormValue("admission_number")
+	classID := r.FormValue("class_id")
+	parentPhone := r.FormValue("parent_phone")
+
+	_, err := database.DB.Exec(
+		"UPDATE students SET full_name = $1, admission_number = $2, class_id = $3, parent_phone = $4 WHERE id = $5",
+		fullName, admissionNumber, classID, parentPhone, id,
+	)
+	if err != nil {
+		http.Error(w, "Failed to update student", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/students", http.StatusSeeOther)
+}
+
+func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	_, err := database.DB.Exec("DELETE FROM results WHERE student_id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete student results", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM students WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete student", http.StatusInternalServerError)
 		return
 	}
 
