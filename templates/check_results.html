@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Results — School Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-card" style="max-width:480px;">
+        <div class="login-logo">
+            <i class="ti ti-file-text"></i>
+        </div>
+        <div class="login-title">Check Results</div>
+        <div class="login-subtitle">Enter the student's admission number to view their results</div>
+
+        {{if .Error}}
+        <div class="error-msg">{{.Error}}</div>
+        {{end}}
+
+        <form action="/check-results" method="POST">
+            <div class="form-group">
+                <label class="form-label">Admission number</label>
+                <input class="form-input" type="text" name="admission_number" value="{{.AdmissionNumber}}" placeholder="e.g. GFS/2024/001" required />
+            </div>
+            <button class="login-btn" type="submit">Check results</button>
+        </form>
+
+        {{if .Found}}
+        <div style="margin-top:28px; padding-top:24px; border-top:0.5px solid #EBF2FA;">
+            <div style="font-size:15px; font-weight:500; color:#1a1a1a;">{{.StudentName}}</div>
+            <div style="font-size:12.5px; color:#888; margin-bottom:16px;">{{.ClassName}} &middot; {{.TermLabel}}</div>
+
+            {{if .Results}}
+            <div style="border-radius:10px; border:0.5px solid #D8E8F8; overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:0.5px solid #EBF2FA;">
+                            <th style="text-align:left; padding:10px 14px; font-size:11.5px; color:#888; font-weight:500;">Subject</th>
+                            <th style="text-align:center; padding:10px 14px; font-size:11.5px; color:#888; font-weight:500;">Total</th>
+                            <th style="text-align:center; padding:10px 14px; font-size:11.5px; color:#888; font-weight:500;">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Results}}
+                        <tr style="border-bottom:0.5px solid #F2F7FC;">
+                            <td style="padding:10px 14px; font-size:13px; color:#1a1a1a;">{{.Subject}}</td>
+                            <td style="padding:10px 14px; text-align:center; font-size:13px; color:#1a1a1a;">{{.Total}}</td>
+                            <td style="padding:10px 14px; text-align:center;">
+                                <span style="font-size:11.5px; font-weight:500; padding:2px 8px; border-radius:20px;
+                                    {{if eq .Grade "A"}}background:#E0F5F0; color:#1A9E80;
+                                    {{else if eq .Grade "B"}}background:#E3F0FB; color:#1A6FBF;
+                                    {{else if eq .Grade "C"}}background:#FFF8E0; color:#B8860B;
+                                    {{else}}background:#FEE; color:#C0392B;
+                                    {{end}}">
+                                    {{.Grade}}
+                                </span>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#F0F6FF;">
+                            <td style="padding:10px 14px; font-size:13px; font-weight:500; color:#1a1a1a;">Average</td>
+                            <td style="padding:10px 14px; text-align:center; font-size:13px; font-weight:500; color:#1a1a1a;">{{printf "%.1f" .Average}}</td>
+                            <td style="padding:10px 14px; text-align:center; font-size:13px; font-weight:500; color:#1a1a1a;">{{.OverallGrade}}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div style="margin-top:14px; text-align:center;">
+                <a href="/reportcards/generate?student_id={{.StudentID}}"
+                    style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#1A6FBF; text-decoration:none; font-weight:500;">
+                    <i class="ti ti-download"></i> Download PDF report card
+                </a>
+            </div>
+            {{else}}
+            <div style="padding:24px; text-align:center; border-radius:10px; border:0.5px solid #D8E8F8;">
+                <div style="font-size:13px; color:#888;">No results have been entered for this term yet.</div>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+</div>
+</body>
+</html>
