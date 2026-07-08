@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 	"text/template"
 
@@ -17,13 +18,31 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := database.DB.Query(`
-		SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
-		       COALESCE(c.name, 'Unassigned')
-		FROM students s
-		LEFT JOIN classes c ON s.class_id = c.id
-		ORDER BY s.full_name ASC
-	`)
+	search := r.URL.Query().Get("search")
+
+	var rows *sql.Rows
+	var err error
+
+	if search != "" {
+		rows, err = database.DB.Query(`
+			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
+			       COALESCE(c.name, 'Unassigned')
+			FROM students s
+			LEFT JOIN classes c ON s.class_id = c.id
+			WHERE LOWER(s.full_name) LIKE LOWER($1)
+			   OR LOWER(s.admission_number) LIKE LOWER($1)
+			ORDER BY s.full_name ASC
+		`, "%"+search+"%")
+	} else {
+		rows, err = database.DB.Query(`
+			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
+			       COALESCE(c.name, 'Unassigned')
+			FROM students s
+			LEFT JOIN classes c ON s.class_id = c.id
+			ORDER BY s.full_name ASC
+		`)
+	}
+
 	if err != nil {
 		http.Error(w, "Failed to load students", http.StatusInternalServerError)
 		return
@@ -61,6 +80,7 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 		"Term":         getCurrentTerm(),
 		"Students":     students,
 		"Classes":      classes,
+		"Search":       search,
 	})
 }
 
