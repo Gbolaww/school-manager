@@ -59,6 +59,9 @@ func main() {
 	r.HandleFunc("/check-results", handlers.ShowCheckResults).Methods("GET")
 	r.HandleFunc("/check-results", handlers.HandleCheckResults).Methods("POST")
 	r.HandleFunc("/check-results/download", handlers.PublicDownloadReportCard).Methods("GET")
+	r.HandleFunc("/students/import", handlers.ShowImport).Methods("GET")
+	r.HandleFunc("/students/import", handlers.HandleImport).Methods("POST")
+	r.HandleFunc("/students/template", handlers.DownloadTemplate).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {

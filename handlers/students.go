@@ -2,7 +2,11 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/csv"
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"school-manager/database"
@@ -10,12 +14,6 @@ import (
 
 	"github.com/gorilla/mux"
 )
-
-type ClassGroup struct {
-	ClassID   int
-	ClassName string
-	Students  []models.Student
-}
 
 func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session")
@@ -32,20 +30,20 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	if search != "" {
 		rows, err = database.DB.Query(`
 			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
-			       COALESCE(c.id, 0), COALESCE(c.name, 'Unassigned')
+			       COALESCE(c.name, 'Unassigned')
 			FROM students s
 			LEFT JOIN classes c ON s.class_id = c.id
 			WHERE LOWER(s.full_name) LIKE LOWER($1)
 			   OR LOWER(s.admission_number) LIKE LOWER($1)
-			ORDER BY c.name ASC, s.full_name ASC
+			ORDER BY s.full_name ASC
 		`, "%"+search+"%")
 	} else {
 		rows, err = database.DB.Query(`
 			SELECT s.id, s.full_name, s.admission_number, s.parent_phone,
-			       COALESCE(c.id, 0), COALESCE(c.name, 'Unassigned')
+			       COALESCE(c.name, 'Unassigned')
 			FROM students s
 			LEFT JOIN classes c ON s.class_id = c.id
-			ORDER BY c.name ASC, s.full_name ASC
+			ORDER BY s.full_name ASC
 		`)
 	}
 
@@ -55,23 +53,11 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	// classID -> index in classGroups, so students land in the right group
-	// as we scan through in class-name order.
-	groupIndex := map[int]int{}
-	var classGroups []ClassGroup
-
+	var students []models.Student
 	for rows.Next() {
 		var s models.Student
-		var classID int
-		rows.Scan(&s.ID, &s.FullName, &s.AdmissionNumber, &s.ParentPhone, &classID, &s.ClassName)
-
-		idx, exists := groupIndex[classID]
-		if !exists {
-			classGroups = append(classGroups, ClassGroup{ClassID: classID, ClassName: s.ClassName})
-			idx = len(classGroups) - 1
-			groupIndex[classID] = idx
-		}
-		classGroups[idx].Students = append(classGroups[idx].Students, s)
+		rows.Scan(&s.ID, &s.FullName, &s.AdmissionNumber, &s.ParentPhone, &s.ClassName)
+		students = append(students, s)
 	}
 
 	classRows, err := database.DB.Query("SELECT id, name FROM classes ORDER BY name ASC")
@@ -96,7 +82,7 @@ func ShowStudents(w http.ResponseWriter, r *http.Request) {
 		"UserInitials": getInitials(session.Values["user_name"].(string)),
 		"Role":         session.Values["user_role"],
 		"Term":         getCurrentTerm(),
-		"ClassGroups":  classGroups,
+		"Students":     students,
 		"Classes":      classes,
 		"Search":       search,
 	})
@@ -178,4 +164,128 @@ func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/students", http.StatusSeeOther)
+}
+
+func ShowImport(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/layout.html", "templates/import.html"))
+	tmpl.Execute(w, map[string]interface{}{
+		"Title":        "Import students",
+		"Page":         "students",
+		"UserName":     session.Values["user_name"],
+		"UserInitials": getInitials(session.Values["user_name"].(string)),
+		"Role":         session.Values["user_role"],
+		"Term":         getCurrentTerm(),
+	})
+}
+
+func HandleImport(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	if session.Values["user_name"] == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	r.ParseMultipartForm(10 << 20)
+	file, _, err := r.FormFile("csv_file")
+	if err != nil {
+		http.Error(w, "Failed to read uploaded file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+
+	// Skip header row
+	_, err = reader.Read()
+	if err != nil {
+		http.Error(w, "Failed to read CSV header", http.StatusBadRequest)
+		return
+	}
+
+	imported := 0
+	skipped := 0
+	var errors []string
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			skipped++
+			continue
+		}
+
+		if len(record) < 3 {
+			skipped++
+			errors = append(errors, fmt.Sprintf("Row skipped — not enough columns: %v", record))
+			continue
+		}
+
+		fullName := strings.TrimSpace(record[0])
+		admissionNumber := strings.TrimSpace(record[1])
+		className := strings.TrimSpace(record[2])
+		parentPhone := ""
+		if len(record) >= 4 {
+			parentPhone = strings.TrimSpace(record[3])
+		}
+
+		if fullName == "" || admissionNumber == "" || className == "" {
+			skipped++
+			errors = append(errors, fmt.Sprintf("Row skipped — missing required fields: %s", admissionNumber))
+			continue
+		}
+
+		var classID int
+		err = database.DB.QueryRow("SELECT id FROM classes WHERE LOWER(name) = LOWER($1)", className).Scan(&classID)
+		if err != nil {
+			skipped++
+			errors = append(errors, fmt.Sprintf("Row skipped — class not found: %s", className))
+			continue
+		}
+
+		_, err = database.DB.Exec(
+			"INSERT INTO students (full_name, admission_number, class_id, parent_phone) VALUES ($1, $2, $3, $4)",
+			fullName, admissionNumber, classID, parentPhone,
+		)
+		if err != nil {
+			skipped++
+			errors = append(errors, fmt.Sprintf("Row skipped — duplicate admission number: %s", admissionNumber))
+			continue
+		}
+
+		imported++
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/layout.html", "templates/import.html"))
+	tmpl.Execute(w, map[string]interface{}{
+		"Title":        "Import students",
+		"Page":         "students",
+		"UserName":     session.Values["user_name"],
+		"UserInitials": getInitials(session.Values["user_name"].(string)),
+		"Role":         session.Values["user_role"],
+		"Term":         getCurrentTerm(),
+		"Imported":     imported,
+		"Skipped":      skipped,
+		"Errors":       errors,
+		"Done":         true,
+	})
+}
+
+func DownloadTemplate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=students_template.csv")
+
+	writer := csv.NewWriter(w)
+	writer.Write([]string{"full_name", "admission_number", "class_name", "parent_phone"})
+	writer.Write([]string{"Chidi Okonkwo", "GFS/2024/001", "JSS 1A", "08012345678"})
+	writer.Write([]string{"Amaka Eze", "GFS/2024/002", "JSS 1A", "08098765432"})
+	writer.Write([]string{"Bola Adeyemi", "GFS/2024/003", "SS 2B", "07011223344"})
+	writer.Flush()
 }

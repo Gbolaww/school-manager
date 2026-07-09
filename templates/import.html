@@ -1,0 +1,87 @@
+{{define "content"}}
+<div style="margin-bottom:20px;">
+    <a href="/students" style="font-size:13px; color:#1A6FBF; text-decoration:none;">
+        <i class="ti ti-arrow-left" style="font-size:13px;"></i> Back to students
+    </a>
+</div>
+
+{{if .Done}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:32px; margin-bottom:24px;">
+    <div style="font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:20px;">Import complete</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+        <div style="background:#E0F5F0; border-radius:12px; padding:20px; text-align:center;">
+            <div style="font-size:32px; font-weight:500; color:#1A9E80;">{{.Imported}}</div>
+            <div style="font-size:13px; color:#1A9E80; margin-top:4px;">Students imported</div>
+        </div>
+        <div style="background:#FEE; border-radius:12px; padding:20px; text-align:center;">
+            <div style="font-size:32px; font-weight:500; color:#C0392B;">{{.Skipped}}</div>
+            <div style="font-size:13px; color:#C0392B; margin-top:4px;">Rows skipped</div>
+        </div>
+    </div>
+
+    {{if .Errors}}
+    <div style="margin-bottom:20px;">
+        <div style="font-size:13px; font-weight:500; color:#444; margin-bottom:10px;">Skipped rows:</div>
+        {{range .Errors}}
+        <div style="font-size:12.5px; color:#C0392B; padding:6px 12px; background:#FEE; border-radius:6px; margin-bottom:6px;">{{.}}</div>
+        {{end}}
+    </div>
+    {{end}}
+
+    <div style="display:flex; gap:10px;">
+        <a href="/students"
+            style="padding:10px 20px; background:#1A6FBF; color:#fff; border-radius:8px; font-size:13.5px; font-weight:500; text-decoration:none;">
+            View students
+        </a>
+        <a href="/students/import"
+            style="padding:10px 20px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:13.5px; color:#444; text-decoration:none;">
+            Import another file
+        </a>
+    </div>
+</div>
+
+{{else}}
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:32px; margin-bottom:24px;">
+    <div style="font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:6px;">Import students from CSV</div>
+    <div style="font-size:13px; color:#888; margin-bottom:24px;">Upload a CSV file to add multiple students at once</div>
+
+    <div style="background:#F0F6FF; border-radius:10px; padding:16px 20px; margin-bottom:24px;">
+        <div style="font-size:13px; font-weight:500; color:#1A6FBF; margin-bottom:8px;">CSV format required:</div>
+        <code style="font-size:12px; color:#444; display:block; line-height:1.8;">
+            full_name, admission_number, class_name, parent_phone<br>
+            Chidi Okonkwo, GFS/2024/001, JSS 1A, 08012345678<br>
+            Amaka Eze, GFS/2024/002, JSS 1A, 08098765432
+        </code>
+        <div style="margin-top:12px;">
+            <a href="/students/template"
+                style="font-size:12.5px; color:#1A6FBF; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                <i class="ti ti-download" style="font-size:13px;"></i> Download template
+            </a>
+        </div>
+    </div>
+
+    <form action="/students/import" method="POST" enctype="multipart/form-data">
+        <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:500; color:#444; margin-bottom:8px;">Select CSV file</label>
+            <input type="file" name="csv_file" accept=".csv"
+                style="width:100%; padding:10px 14px; border:0.5px solid #C5D8EE; border-radius:8px; font-size:13.5px; outline:none; background:#fff;" required />
+        </div>
+        <button type="submit"
+            style="padding:10px 24px; background:#1A6FBF; color:#fff; border:none; border-radius:8px; font-size:13.5px; font-weight:500; cursor:pointer;">
+            Import students
+        </button>
+    </form>
+</div>
+
+<div style="background:#fff; border-radius:12px; border:0.5px solid #D8E8F8; padding:24px;">
+    <div style="font-size:14px; font-weight:500; color:#1a1a1a; margin-bottom:12px;">Important notes</div>
+    <div style="font-size:13px; color:#888; line-height:2;">
+        • The class name in your CSV must exactly match a class already in the system<br>
+        • Duplicate admission numbers will be skipped automatically<br>
+        • Parent phone is optional — the other three columns are required<br>
+        • Download the template above to get started quickly
+    </div>
+</div>
+{{end}}
+{{end}}
